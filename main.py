@@ -2,7 +2,7 @@ import pygame
 
 print('Setup Start')
 pygame.init()
-window = pygame.display.set_mode(size=(800, 680))
+window = pygame.display.set_mode(size=(640, 400))
 print('Setup Start')
 
 print('Loop Start')
