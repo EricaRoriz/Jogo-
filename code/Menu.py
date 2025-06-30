@@ -5,7 +5,7 @@ from msilib.schema import Font
 import pygame
 from pygame import Surface, Rect
 
-from code.const import WIN_WIDTH, C_RED, MENU_OPTION, C_WHITE
+from code.const import WIN_WIDTH, C_RED, MENU_OPTION, C_WHITE, C_YELLOW
 
 
 class Menu:
@@ -14,17 +14,20 @@ class Menu:
         self.surf = pygame.image.load('./asset/BgMenu.png')
         self.rect = self.surf.get_rect(left=0, top=0)
 
-    def run(self):
+    def run(self, ):
+        menu_option = 0
         pygame.mixer_music.load('./asset/Menu_music.wav')
         pygame.mixer_music.play(-1)
         while True:
             self.window.blit(source=self.surf, dest=self.rect)
-            self.menu_text(90, "Zombie", C_WHITE, ((WIN_WIDTH / 2), 90))
-            self.menu_text(90, "Shooter", C_WHITE, ((WIN_WIDTH / 2), 160))
+            self.menu_text(90, "Zombie", C_RED, ((WIN_WIDTH / 2), 90))
+            self.menu_text(90, "Shooter", C_RED, ((WIN_WIDTH / 2), 160))
 
             for i in range(len(MENU_OPTION)):
-                self.menu_text(30, MENU_OPTION[i], C_WHITE, ((WIN_WIDTH / 2), 250 + 30 * i))
-
+                if i == menu_option:
+                    self.menu_text(30, MENU_OPTION[i], C_YELLOW, ((WIN_WIDTH / 2), 250 + 30 * i))
+                else:
+                    self.menu_text(30, MENU_OPTION[i], C_WHITE, ((WIN_WIDTH / 2), 250 + 30 * i))
             pygame.display.flip()
 
             # Check for all events
@@ -32,6 +35,22 @@ class Menu:
                 if event.type == pygame.QUIT:
                     pygame.quit()  # Close Window
                     quit()  # end pygame
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_DOWN:
+                        if menu_option < len(MENU_OPTION) - 1:
+                            menu_option += 1
+                        else:
+                            menu_option = 0
+
+                    if event.key == pygame.K_UP:
+                        if menu_option > 0:
+                            menu_option -= 1
+                        else:
+                            menu_option = len(MENU_OPTION) - 1
+                    if event.key == pygame.K_RETURN:
+                        return MENU_OPTION[menu_option]
+
+
 
     def menu_text(self, text_size: int, text: str, text_color: tuple, text_center_pos: tuple):
         text_font: Font = pygame.font.SysFont(name="Lucida Sans Typerwriter", size=text_size)
