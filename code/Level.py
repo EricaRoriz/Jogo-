@@ -1,61 +1,56 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-import pygame.display
+
+import sys
+import pygame
+from pygame import Surface, Rect
+from pygame.font import Font
 
 from code.Entity import Entity
 from code.EntityFactory import EntityFactory
-from typing import List
-from code.Entity import Entity  # se não tiver, adicione esse import
-
-
-
-
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
-
-import pygame
-from code.EntityFactory import EntityFactory
+from code.const import C_WHITE, WIN_HEIGHT
 
 class Level:
     def __init__(self, window, name, menu_return):
         self.window = window
         self.name = name
         self.menu_return = menu_return
-
-        # Carrega as 9 camadas de fundo com base no nome
         self.entity_list = EntityFactory.get_entity('Level1Bg')
-
-        # Posição X de cada layer (pra simular deslocamento)
         self.layer_offsets = [0.0] * len(self.entity_list)
-
-        # Velocidade de deslocamento de cada camada
-        self.layer_speeds = [0.2 + i * 1 for i in range(len(self.entity_list))]
+        self.layer_speeds = [0.2 + i * 0.5 for i in range(len(self.entity_list))]
+        self.timeout = 60000  # 60 segundos
 
     def run(self):
         running = True
         clock = pygame.time.Clock()
+
         pygame.mixer_music.stop()
         pygame.mixer_music.load('./asset/Level1.mp3')
         pygame.mixer_music.play(-1)
+
         while running:
-            # EVENTS
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
                     pygame.quit()
-                    quit()
+                    sys.exit()
 
-
-            # UPDATE
             self.update()
-
-            # DRAW
             self.draw()
 
-            # Atualiza a tela
-            pygame.display.flip()
-            clock.tick(60)  # 60 FPS
+            # Exibe textos na tela
+            self.level_text(14, f'{self.name} - Timeout: {self.timeout / 1000:.1f}s', C_WHITE, (10, 5))
+            self.level_text(14, f'fps: {clock.get_fps():.0f}', C_WHITE, (10, WIN_HEIGHT - 35))
+            self.level_text(14, f'entidades: {len(self.entity_list)}', C_WHITE, (10, WIN_HEIGHT - 20))
 
+            pygame.display.flip()
+            clock.tick(60)
+
+    def level_text(self, text_size: int, text: str, text_color: tuple, text_pos: tuple):
+        text_font: Font = pygame.font.SysFont("Lucida Sans Typewriter", text_size)
+        text_surf: Surface = text_font.render(text, True, text_color).convert_alpha()
+        text_rect: Rect = text_surf.get_rect(left=text_pos[0], top=text_pos[1])
+        self.window.blit(text_surf, text_rect)
 
     def update(self):
         for i in range(len(self.entity_list)):
