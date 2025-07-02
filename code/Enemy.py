@@ -7,9 +7,12 @@ class Enemy(Entity):
     def __init__(self, name, position, size=(70, 100)):
         super().__init__(name, position)
         self.speed = 2
-        self.surf = pygame.transform.scale(self.surf, size)  # redimensiona
-        self.surf = pygame.transform.flip(self.surf, True, False)  # vira de frente
+        self.health = 3
+        self.surf = pygame.transform.scale(self.surf, size)
+        self.surf = pygame.transform.flip(self.surf, True, False)
 
     def move(self):
         self.rect.x -= self.speed
 
+    def hit(self):
+        self.health -= 1

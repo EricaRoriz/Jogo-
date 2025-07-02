@@ -5,6 +5,7 @@ import sys
 import pygame
 import random
 
+from code.Bullet import Bullet
 from code.Player import Player
 from code.Enemy import Enemy
 from code.StaticObstacle import StaticObstacle
@@ -20,6 +21,9 @@ class Level:
         self.timeout = 60000  # 60 segundos
         self.last_spawned_type = None
 
+        self.bullets = pygame.sprite.Group()
+        self.shoot_sound = pygame.mixer.Sound('./asset/gunshot.wav')
+
         # Backgrounds com parallax
         self.entity_list = EntityFactory.get_entity('Level1Bg')
         self.layer_offsets = [0.0] * len(self.entity_list)
@@ -31,16 +35,11 @@ class Level:
         # Tipos de entidades
         self.enemy_types = ['Zombie1', 'Zombie2', 'Zombie3']
         self.obstacle_types = ['Hand', 'Lapide', 'Bones']
-
-        # Entidades móveis
         self.entities = []
 
-        # Spawn timer
+        # Timer de spawn
         self.spawn_timer = 0
         self.next_spawn_time = random.randint(1000, 4000)
-
-        # Balas disparadas
-        self.bullets = []
 
     def run(self):
         running = True
@@ -51,61 +50,70 @@ class Level:
         pygame.mixer_music.play(-1)
 
         while running:
+            # --- Eventos de teclado ---
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_f:
-                        self.bullets.append(self.player.shoot())
 
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_SPACE:
+                        bullet = self.player.shoot()
+                        self.bullets.add(bullet)
+                        pygame.mixer.Sound.play(self.shoot_sound)
+
+            # --- Atualização do jogador ---
             keys = pygame.key.get_pressed()
             self.player.update(keys)
 
-            # Controle de spawn
+            # --- Atualização das balas ---
+            self.bullets.update()
+            for bullet in self.bullets.copy():
+                if bullet.rect.right < 0 or bullet.rect.left > 701:
+                    self.bullets.remove(bullet)
+                    continue
+
+                # Verifica colisão com zumbis
+                for entity in self.entities[:]:
+                    if isinstance(entity, Enemy) and entity.rect.colliderect(bullet.rect):
+                        entity.hit()
+                        if entity.health <= 0:
+                            self.entities.remove(entity)
+                        self.bullets.remove(bullet)
+                        break
+
+            # --- Spawning de inimigos e obstáculos ---
             self.spawn_timer += clock.get_time()
             if self.spawn_timer >= self.next_spawn_time:
                 spawn_type = random.choice(['enemy', 'obstacle'])
-
-                # Evita dois obstáculos seguidos
                 if self.last_spawned_type == 'obstacle' and spawn_type == 'obstacle':
-                    spawn_type = 'enemy'  # força zumbi
+                    spawn_type = 'enemy'
 
                 if spawn_type == 'enemy':
                     name = random.choice(self.enemy_types)
-                    print(f"Spawnando zumbi: {name}")
                     new_entity = Enemy(name, (701, 320), size=(70, 100))
                     self.last_spawned_type = 'enemy'
                 else:
                     name = random.choice(self.obstacle_types)
-                    print(f"Spawnando obstáculo: {name}")
                     new_entity = StaticObstacle(name, (701, 0), size=(80, 120))
-                    if name == 'Bones':
-                        new_entity.rect.bottom = 440
-                    else:
-                        new_entity.rect.bottom = 430
+                    new_entity.rect.bottom = 440 if name == 'Bones' else 430
                     self.last_spawned_type = 'obstacle'
 
                 self.entities.append(new_entity)
                 self.spawn_timer = 0
-                self.next_spawn_time = random.randint(1500, 5000)  # aumenta o intervalo mínimo!
+                self.next_spawn_time = random.randint(1500, 5000)
 
-                            # Atualiza inimigos/obstáculos
+            # --- Atualiza entidades (move inimigos/obstáculos) ---
             for entity in self.entities[:]:
                 entity.move()
                 if entity.rect.right < 0:
                     self.entities.remove(entity)
 
-            # Atualiza balas
-            for bullet in self.bullets[:]:
-                bullet.move()
-                if bullet.rect.left > 701 or bullet.rect.right < 0:
-                    self.bullets.remove(bullet)
-
+            # --- Atualizações gerais ---
             self.update()
             self.draw()
 
-            # HUD
+            # --- HUD ---
             self.level_text(14, f'{self.name} - Timeout: {self.timeout / 1000:.1f}s', C_WHITE, (10, 5))
             self.level_text(14, f'fps: {clock.get_fps():.0f}', C_WHITE, (10, WIN_HEIGHT - 35))
             self.level_text(14, f'entidades: {len(self.entities)}', C_WHITE, (10, WIN_HEIGHT - 20))
@@ -120,12 +128,12 @@ class Level:
         self.window.blit(surf, rect)
 
     def update(self):
-        # Parallax update
         for i, entity in enumerate(self.entity_list):
             self.layer_offsets[i] -= self.layer_speeds[i]
             width = entity.surf.get_width()
             if self.layer_offsets[i] <= -width:
                 self.layer_offsets[i] = 0
+
 
     def draw(self):
         # Fundo com parallax
@@ -138,10 +146,9 @@ class Level:
         # Player
         self.window.blit(self.player.surf, self.player.rect)
 
-        # Entidades móveis
+        # Inimigos e obstáculos
         for entity in self.entities:
             self.window.blit(entity.surf, entity.rect)
 
         # Balas
-        for bullet in self.bullets:
-            self.window.blit(bullet.surf, bullet.rect)
+        self.bullets.draw(self.window)

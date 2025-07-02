@@ -36,7 +36,7 @@ class Player(Entity):
             self.rect.right = 701
 
         # Pulo
-        if keys_pressed[pygame.K_SPACE] and self.on_ground:
+        if keys_pressed[pygame.K_UP] and self.on_ground:
             self.velocity_y = self.jump_speed
             self.on_ground = False
 
@@ -54,5 +54,7 @@ class Player(Entity):
         pass  # método abstrato implementado, pode ficar vazio
 
     def shoot(self):
-        return Bullet(self.rect.midright if not self.flipped else self.rect.midleft, self.flipped)
+        position = self.rect.midright if not self.flipped else self.rect.midleft
+        return Bullet(position, self.flipped)
+
 
