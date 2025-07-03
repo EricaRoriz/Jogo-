@@ -8,6 +8,8 @@ from code.Entity import Entity
 class Player(Entity):
     def __init__(self, position, size=(100, 150)):
         super().__init__('Player1', position, size)
+        self.health = 200
+        self.is_alive = True
         self.flipped = False
         self.speed = 5
         self.jump_speed = -18
@@ -15,7 +17,17 @@ class Player(Entity):
         self.velocity_y = 0
         self.on_ground = True
 
+    def hit(self, damage=1):
+        if not self.is_alive:
+            return
+        self.health -= damage
+        if self.health <= 0:
+            self.health = 0
+            self.is_alive = False
+
     def update(self, keys_pressed):
+        if not self.is_alive:
+            return
         # Movimento horizontal controlado
         if keys_pressed[pygame.K_LEFT]:
             self.rect.x -= self.speed

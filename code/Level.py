@@ -18,8 +18,11 @@ class Level:
         self.window = window
         self.name = name
         self.menu_return = menu_return
-        self.timeout = 60000  # 60 segundos
+        self.time_left = 60000  # 60 segundos em milissegundos
+        self.score = 0
         self.last_spawned_type = None
+
+        self.font = pygame.font.SysFont("Lucida Sans Typewriter", 14)
 
         self.bullets = pygame.sprite.Group()
         self.shoot_sound = pygame.mixer.Sound('./asset/gunshot.wav')
@@ -50,40 +53,43 @@ class Level:
         pygame.mixer_music.play(-1)
 
         while running:
-            # --- Eventos de teclado ---
+            dt = clock.tick(60)  # dt em ms, limita a 60fps
+
+            # Eventos
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
 
                 if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_SPACE:
+                    if event.key == pygame.K_SPACE and self.player.is_alive:
                         bullet = self.player.shoot()
                         self.bullets.add(bullet)
                         pygame.mixer.Sound.play(self.shoot_sound)
 
-            # --- Atualização do jogador ---
+            # Atualiza player
             keys = pygame.key.get_pressed()
-            self.player.update(keys)
+            if self.player.is_alive:
+                self.player.update(keys)
 
-            # --- Atualização das balas ---
+            # Atualiza balas
             self.bullets.update()
             for bullet in self.bullets.copy():
                 if bullet.rect.right < 0 or bullet.rect.left > 701:
                     self.bullets.remove(bullet)
                     continue
 
-                # Verifica colisão com zumbis
                 for entity in self.entities[:]:
                     if isinstance(entity, Enemy) and entity.rect.colliderect(bullet.rect):
                         entity.hit()
                         if entity.health <= 0:
                             self.entities.remove(entity)
+                            self.score += 10  # Pontos por matar inimigo
                         self.bullets.remove(bullet)
                         break
 
-            # --- Spawning de inimigos e obstáculos ---
-            self.spawn_timer += clock.get_time()
+            # Spawn inimigos e obstáculos alternados
+            self.spawn_timer += dt
             if self.spawn_timer >= self.next_spawn_time:
                 spawn_type = random.choice(['enemy', 'obstacle'])
                 if self.last_spawned_type == 'obstacle' and spawn_type == 'obstacle':
@@ -95,31 +101,67 @@ class Level:
                     self.last_spawned_type = 'enemy'
                 else:
                     name = random.choice(self.obstacle_types)
-                    new_entity = StaticObstacle(name, (701, 0), size=(80, 120))
-                    new_entity.rect.bottom = 440 if name == 'Bones' else 430
+                    new_entity = StaticObstacle(name, (701, 0), size=(70, 90))
+                    new_entity.rect.bottom = 440 if name == 'Bones' else 420
                     self.last_spawned_type = 'obstacle'
 
                 self.entities.append(new_entity)
                 self.spawn_timer = 0
                 self.next_spawn_time = random.randint(1500, 5000)
 
-            # --- Atualiza entidades (move inimigos/obstáculos) ---
+            # Atualiza entidades (move inimigos/obstáculos)
             for entity in self.entities[:]:
                 entity.move()
                 if entity.rect.right < 0:
                     self.entities.remove(entity)
 
-            # --- Atualizações gerais ---
+            # Colisão player vs inimigos/obstáculos
+            if self.player.is_alive:
+                for entity in self.entities:
+                    if self.player.rect.colliderect(entity.rect):
+                        self.player.hit(damage=1)  # dano reduzido
+                        # recua para não travar
+                        if self.player.rect.left < entity.rect.left:
+                            self.player.rect.x -= 10
+                        else:
+                            self.player.rect.x += 10
+                        break
+
+            # Atualiza tempo restante e finaliza o nível se acabar
+            self.time_left -= dt
+            if self.time_left <= 0:
+                print("Tempo esgotado! Fim do nível.")
+                running = False
+
+            # Atualiza score com tempo corrido
+            self.score += dt / 1000  # 1 ponto por segundo
+
+            # Desenha tudo
             self.update()
             self.draw()
 
-            # --- HUD ---
-            self.level_text(14, f'{self.name} - Timeout: {self.timeout / 1000:.1f}s', C_WHITE, (10, 5))
-            self.level_text(14, f'fps: {clock.get_fps():.0f}', C_WHITE, (10, WIN_HEIGHT - 35))
-            self.level_text(14, f'entidades: {len(self.entities)}', C_WHITE, (10, WIN_HEIGHT - 20))
+            # HUD
+            self.level_text(14, f'{self.name} - Time Left: {self.time_left // 1000}s', C_WHITE, (10, 5))
+            self.level_text(14, f'Score: {int(self.score)}', C_WHITE, (10, 25))
+            self.level_text(14, f'Entities: {len(self.entities)}', C_WHITE, (10, 45))
+            self.level_text(14, f'FPS: {clock.get_fps():.0f}', C_WHITE, (10, WIN_HEIGHT - 35))
 
             pygame.display.flip()
-            clock.tick(60)
+
+    def draw_health_bar(self):
+        if not self.player.is_alive:
+            return
+        bar_width = 200
+        bar_height = 5
+        x, y = 10, 70
+
+        ratio = max(self.player.health, 0) / 200
+        fill_width = int(bar_width * ratio)
+
+        # Fundo vermelho
+        pygame.draw.rect(self.window, (255, 0, 0), (x, y, bar_width, bar_height))
+        # Vida verde
+        pygame.draw.rect(self.window, (0, 255, 0), (x, y, fill_width, bar_height))
 
     def level_text(self, text_size: int, text: str, text_color: tuple, text_pos: tuple):
         font = pygame.font.SysFont("Lucida Sans Typewriter", text_size)
@@ -128,27 +170,29 @@ class Level:
         self.window.blit(surf, rect)
 
     def update(self):
+        # Atualiza parallax do fundo
         for i, entity in enumerate(self.entity_list):
             self.layer_offsets[i] -= self.layer_speeds[i]
             width = entity.surf.get_width()
             if self.layer_offsets[i] <= -width:
                 self.layer_offsets[i] = 0
 
-
     def draw(self):
-        # Fundo com parallax
+        # Desenha o fundo com parallax
         for i, entity in enumerate(self.entity_list):
             offset = self.layer_offsets[i]
             width = entity.surf.get_width()
             self.window.blit(entity.surf, (offset, 0))
             self.window.blit(entity.surf, (offset + width, 0))
+            self.level_text(14, f'Health: {self.player.health}', C_WHITE, (10, 70))
 
-        # Player
-        self.window.blit(self.player.surf, self.player.rect)
+        # Desenha player somente se estiver vivo
+        if self.player.is_alive:
+            self.window.blit(self.player.surf, self.player.rect)
 
-        # Inimigos e obstáculos
+        # Desenha inimigos e obstáculos
         for entity in self.entities:
             self.window.blit(entity.surf, entity.rect)
 
-        # Balas
+        # Desenha as balas
         self.bullets.draw(self.window)
