@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 import pygame
 
 class Obstacle(Entity):
-    def __init__(self, name, position, size=(80, 120)):
+    def __init__(self, name, position, size=(80, 100)):
         super().__init__(name, position, size)
         self.rect.y = 310
 
@@ -14,7 +14,7 @@ class Obstacle(Entity):
 import pygame
 
 class Obstacle:
-    def __init__(self, name, position, size=(80, 120)):
+    def __init__(self, name, position, size=(80, 100)):
         self.name = name
         self.position = position
         self.surf = pygame.image.load(f'./asset/{name}.png').convert_alpha()
