@@ -29,7 +29,7 @@ class Level:
 
         self.entity_list = EntityFactory.get_entity('Level1Bg')
         self.layer_offsets = [0.0] * len(self.entity_list)
-        self.layer_speeds = [0.2 + i * 0.5 for i in range(len(self.entity_list))]
+        self.layer_speeds = [0.2 + i * 1.5 for i in range(len(self.entity_list))]
 
         self.player = Player((100, 320), size=(100, 140))
 
@@ -73,12 +73,21 @@ class Level:
                 new_entity.rect.bottom = 420
             else:
                 name = random.choice(self.obstacle_types)
-                if name == 'Bones':
-                    new_entity = StaticObstacle(name, (701, 0), size=(70, 70))
-                    new_entity.rect.bottom = 430
+                # Usar self.name para verificar o nível
+                if self.name == "LEVEL 2":
+                    if name == 'Bones':
+                        new_entity = StaticObstacle(name, (701, 0), size=(80, 90))
+                        new_entity.rect.bottom = 420
+                    else:
+                        new_entity = StaticObstacle(name, (701, 0), size=(70, 90))
+                        new_entity.rect.bottom = 425
                 else:
-                    new_entity = StaticObstacle(name, (701, 0), size=(80, 100))
-                    new_entity.rect.bottom = 420
+                    if name == 'Bones':
+                        new_entity = StaticObstacle(name, (701, 0), size=(70, 70))
+                        new_entity.rect.bottom = 430
+                    else:
+                        new_entity = StaticObstacle(name, (701, 0), size=(80, 100))
+                        new_entity.rect.bottom = 420
 
             self.entities.append(new_entity)
             self.spawn_timer = 0

@@ -1,11 +1,12 @@
-# code/StaticObstacle.py
+import pygame
 from code.Obstacle import Obstacle
 
 class StaticObstacle(Obstacle):
-    def __init__(self, name, position, size=(70, 90)):
+    def __init__(self, name, position, size=None, speed=5):
+        if size is None:
+            size = (80, 100)
         super().__init__(name, position, size)
-        self.speed = 2  # mesma velocidade dos zumbis
+        self.speed = speed  # define velocidade aqui
 
     def move(self):
         self.rect.x -= self.speed
-
