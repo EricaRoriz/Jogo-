@@ -4,6 +4,7 @@ import pygame
 
 from code.EntityFactory import EntityFactory
 from code.Level import Level
+from code.const import WIN_WIDTH, WIN_HEIGHT
 
 
 class Level2(Level):
@@ -49,12 +50,18 @@ class Level2(Level):
 
             # Condições de término
             if not self.player.is_alive:
-                pygame.time.delay(2000)
+                self.fade_in_text("Game Over", 40, (255, 0, 0))
+                pygame.display.flip()
+                pygame.time.delay(1500)
                 return self.menu_return
 
             if self.time_left <= 0:
-                pygame.time.delay(2000)
-                print("Parabéns! Você venceu o jogo.")
+                self.window.fill((0, 0, 0))
+                self.fade_in_text("Parabéns! Você venceu o jogo!", 36, (0, 255, 0))
+                pygame.time.delay(1000)
+
+                pygame.display.flip()
+                pygame.time.delay(3000)
                 return self.menu_return
 
             # Render

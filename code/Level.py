@@ -31,7 +31,7 @@ class Level:
         self.layer_offsets = [0.0] * len(self.entity_list)
         self.layer_speeds = [0.2 + i * 1.5 for i in range(len(self.entity_list))]
 
-        self.player = Player((100, 320), size=(100, 140))
+        self.player = Player((100, 290), size=(85, 125))
 
         self.enemy_types = ['Zombie1', 'Zombie2', 'Zombie3']
         self.obstacle_types = ['Hand', 'Lapide', 'Bones']
@@ -47,6 +47,8 @@ class Level:
 
     def update_bullets(self):
         self.bullets.update()
+        self.bullets.draw(self.window)
+
         for bullet in self.bullets.copy():
             if bullet.rect.right < 0 or bullet.rect.left > 701:
                 self.bullets.remove(bullet)
@@ -138,7 +140,7 @@ class Level:
                     pygame.quit()
                     sys.exit()
                 if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_SPACE and self.player.is_alive:
+                    if event.key == pygame.K_SPACE:
                         bullet = self.player.shoot()
                         self.bullets.add(bullet)
                         pygame.mixer.Sound.play(self.shoot_sound)
@@ -153,7 +155,9 @@ class Level:
 
             # Condições de término
             if not self.player.is_alive:
-                pygame.time.delay(2000)
+                self.fade_in_text("Game Over", 40, (255, 0, 0))
+                pygame.display.flip()
+                pygame.time.delay(1500)
                 return self.menu_return
 
             if self.time_left <= 0 and self.player.is_alive:
@@ -181,10 +185,15 @@ class Level:
         pygame.draw.rect(self.window, (255, 0, 0), (x, y, bar_width, bar_height))
         pygame.draw.rect(self.window, (0, 255, 0), (x, y, fill_width, bar_height))
 
-    def level_text(self, text_size: int, text: str, text_color: tuple, text_pos: tuple):
+    def level_text(self, text_size: int, text: str, text_color: tuple, text_pos: tuple, centered=False):
         font = pygame.font.SysFont("Lucida Sans Typewriter", text_size)
         surf = font.render(text, True, text_color).convert_alpha()
-        rect = surf.get_rect(topleft=text_pos)
+
+        if centered:
+            rect = surf.get_rect(center=text_pos)  # centraliza no ponto
+        else:
+            rect = surf.get_rect(topleft=text_pos)  # mantém padrão à esquerda
+
         self.window.blit(surf, rect)
 
     def update(self):
@@ -193,6 +202,26 @@ class Level:
             width = entity.surf.get_width()
             if self.layer_offsets[i] <= -width:
                 self.layer_offsets[i] = 0
+
+    def fade_in_text(self, text: str, size: int, color: tuple, duration=2000):
+        font = pygame.font.SysFont("Lucida Sans Typewriter", size)
+        surf = font.render(text, True, color).convert_alpha()
+        rect = surf.get_rect(center=(self.window.get_width() // 2, self.window.get_height() // 2))
+
+        clock = pygame.time.Clock()
+        total_time = 0
+        alpha = 0
+
+        while total_time < duration:
+            dt = clock.tick(60)
+            total_time += dt
+            alpha = min(255, int((total_time / duration) * 255))
+            surf.set_alpha(alpha)
+
+            self.update()
+            self.draw()
+            self.window.blit(surf, rect)
+            pygame.display.flip()
 
     def draw(self):
         for i, entity in enumerate(self.entity_list):
@@ -203,7 +232,7 @@ class Level:
             self.level_text(14, f'Health: {self.player.health}', C_WHITE, (10, 70))
 
         if self.player.is_alive:
-            self.window.blit(self.player.surf, self.player.rect)
+            self.window.blit(self.player.image, self.player.rect)
 
         for entity in self.entities:
             self.window.blit(entity.surf, entity.rect)
