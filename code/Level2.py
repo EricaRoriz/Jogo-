@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 import sys
 import pygame
 import sqlite3
@@ -5,7 +8,6 @@ from datetime import datetime
 
 from code.EntityFactory import EntityFactory
 from code.Level import Level
-from code.Score import Score
 from code.const import WIN_WIDTH, WIN_HEIGHT
 
 
@@ -42,13 +44,11 @@ class Level2(Level):
 
     def run(self):
         clock = pygame.time.Clock()
-        running = True
-
         pygame.mixer_music.stop()
         pygame.mixer_music.load('./asset/Level2.mp3')
         pygame.mixer_music.play(-1)
 
-        while running:
+        while True:
             dt = clock.tick(60)
             self.spawn_timer += dt
             self.time_left -= dt
@@ -71,26 +71,21 @@ class Level2(Level):
             self.check_collisions()
             self.update_score(dt)
 
-            # Game over - salva score no banco
             if not self.player.is_alive:
                 self.fade_in_text("Game Over", 40, (255, 0, 0))
                 pygame.display.flip()
                 pygame.time.delay(1500)
-                score_screen = Score(self.window)
-                score_screen.save(self.menu_return, [int(self.score)])
-                return self.menu_return
+                self.close_db()
+                return "GAME_OVER"
 
-            # Vitória
             if self.time_left <= 0:
                 self.window.fill((0, 0, 0))
                 self.fade_in_text("Parabéns! Você venceu o jogo!", 36, (0, 255, 0))
                 pygame.display.flip()
                 pygame.time.delay(3000)
-                score_screen = Score(self.window)
-                score_screen.save(self.menu_return, [int(self.score)])
-                return
+                self.close_db()
+                return "VICTORY"
 
-            # Render
             self.update()
             self.draw()
             self.draw_hud(clock)

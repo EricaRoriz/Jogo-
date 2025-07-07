@@ -18,7 +18,7 @@ class Level:
         self.window = window
         self.name = name
         self.menu_return = menu_return
-        self.time_left = 5000  # 60 segundos
+        self.time_left = 60000  # 60 segundos
         self.score = 0
         self.last_spawned_type = None
 
@@ -140,7 +140,7 @@ class Level:
                     pygame.quit()
                     sys.exit()
                 if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_SPACE:
+                    if event.key == pygame.K_SPACE and self.player.is_alive:
                         bullet = self.player.shoot()
                         self.bullets.add(bullet)
                         pygame.mixer.Sound.play(self.shoot_sound)
@@ -153,18 +153,17 @@ class Level:
             self.check_collisions()
             self.update_score(dt)
 
-            # Condições de término
+            # Condição de Game Over
             if not self.player.is_alive:
                 self.fade_in_text("Game Over", 40, (255, 0, 0))
                 pygame.display.flip()
                 pygame.time.delay(1500)
-                return self.menu_return
+                return "GAME_OVER"
 
+            # Vitória: avança para o Level 2
             if self.time_left <= 0 and self.player.is_alive:
-                from code.Level2 import Level2
-                next_level = Level2(self.window, self.score, self.menu_return)
-                next_level.run()
-                return
+                # Apenas retorna "VICTORY" para o Game chamar o Level2
+                return "VICTORY"
 
             # Render
             self.update()
