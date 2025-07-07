@@ -11,7 +11,7 @@ class EntityFactory:
             return [Background(f'Level1Bg{i}', position) for i in range(9)]
 
         elif entity_name == 'Level2Bg':
-            return [Background(f'Level2Bg{i}', position) for i in range(7)]  # ou 9 se tiver 9 camadas
+            return [Background(f'Level2Bg{i}', position) for i in range(7)]
 
         elif entity_name == 'Player1':
             pos = position if position != (0, 0) else (10, 680)

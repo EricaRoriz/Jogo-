@@ -1,6 +1,7 @@
 # code/Obstacle.py
 import pygame
 
+
 class Obstacle:
     def __init__(self, name, position, size=(80, 100)):
         self.name = name
