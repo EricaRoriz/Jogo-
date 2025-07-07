@@ -4,6 +4,7 @@ import pygame
 
 from code.EntityFactory import EntityFactory
 from code.Level import Level
+from code.Score import Score
 from code.const import WIN_WIDTH, WIN_HEIGHT
 
 
@@ -58,11 +59,11 @@ class Level2(Level):
             if self.time_left <= 0:
                 self.window.fill((0, 0, 0))
                 self.fade_in_text("Parabéns! Você venceu o jogo!", 36, (0, 255, 0))
-                pygame.time.delay(1000)
-
                 pygame.display.flip()
                 pygame.time.delay(3000)
-                return self.menu_return
+                score_screen = Score(self.window)
+                score_screen.show()
+                return
 
             # Render
             self.update()

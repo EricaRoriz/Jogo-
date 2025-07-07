@@ -7,6 +7,7 @@ C_YELLOW = (255, 242, 0)
 MENU_OPTION = ('NEW GAME 1P',
                'NEW GAME 2P - COOPERATIVE',
                'NEW GAME 2P - COMPETITIVE',
+               'SCORE',
                'OPTIONS',
                'EXIT')
 
