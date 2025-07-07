@@ -54,6 +54,8 @@ class Level2(Level):
                 self.fade_in_text("Game Over", 40, (255, 0, 0))
                 pygame.display.flip()
                 pygame.time.delay(1500)
+                score_screen = Score(self.window)
+                score_screen.save(self.menu_return, [int(self.score)])
                 return self.menu_return
 
             if self.time_left <= 0:

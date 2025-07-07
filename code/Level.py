@@ -18,7 +18,7 @@ class Level:
         self.window = window
         self.name = name
         self.menu_return = menu_return
-        self.time_left = 60000  # 60 segundos
+        self.time_left = 10000  # 60 segundos
         self.score = 0
         self.last_spawned_type = None
 

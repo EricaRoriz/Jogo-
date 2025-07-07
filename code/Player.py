@@ -22,7 +22,7 @@ class Player(Entity):
         self.head_x_offset = 15
         self.head_y_offset = -23
         self.gun_x_offset = 40
-        self.gun_y_offset = 30
+        self.gun_y_offset = 25
 
         self.animation_delay = 5
         self.animation_timer = 0

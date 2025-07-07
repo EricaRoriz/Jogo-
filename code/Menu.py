@@ -82,7 +82,7 @@ class Menu:
             self.menu_text(60, "OPTIONS", C_RED, (WIN_WIDTH / 2, 100))
 
             status = "Muted" if muted else f"Volume: {int(volume * 100)}%"
-            self.menu_text(40, status, C_WHITE, (WIN_WIDTH / 2, 240))
+            self.menu_text(40, status, C_WHITE, (WIN_WIDTH / 2, 200))
             self.menu_text(30, "LEFT: decrease | RIGHT: increase | M to mute | ESC to return", C_WHITE, (WIN_WIDTH / 2, 260))
 
             pygame.display.flip()
