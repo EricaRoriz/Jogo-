@@ -1,6 +1,7 @@
 import sys
-
 import pygame
+import sqlite3
+from datetime import datetime
 
 from code.EntityFactory import EntityFactory
 from code.Level import Level
@@ -17,6 +18,28 @@ class Level2(Level):
         self.layer_speeds = [0.3 + i * 1.5 for i in range(len(self.entity_list))]
         self.obstacle_types = ['Barril', 'Abobora', 'Placa', 'Hand2']
 
+        # Conecta ao banco SQLite e cria tabela se não existir
+        self.conn = sqlite3.connect('DBScore.db')
+        self.conn.execute('''
+            CREATE TABLE IF NOT EXISTS dados(
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                score INTEGER NOT NULL,
+                date TEXT NOT NULL
+            )
+        ''')
+        self.conn.commit()
+
+    def save_score(self, player_name, score):
+        self.conn.execute(
+            'INSERT INTO dados (name, score, date) VALUES (?, ?, ?)',
+            (player_name, score, datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+        )
+        self.conn.commit()
+
+    def close_db(self):
+        self.conn.close()
+
     def run(self):
         clock = pygame.time.Clock()
         running = True
@@ -30,9 +53,9 @@ class Level2(Level):
             self.spawn_timer += dt
             self.time_left -= dt
 
-            # Eventos
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
+                    self.close_db()
                     pygame.quit()
                     sys.exit()
                 if event.type == pygame.KEYDOWN:
@@ -41,7 +64,6 @@ class Level2(Level):
                         self.bullets.add(bullet)
                         pygame.mixer.Sound.play(self.shoot_sound)
 
-            # Atualizações
             self.update_player()
             self.update_bullets()
             self.spawn_entities()
@@ -49,7 +71,7 @@ class Level2(Level):
             self.check_collisions()
             self.update_score(dt)
 
-            # Condições de término
+            # Game over - salva score no banco
             if not self.player.is_alive:
                 self.fade_in_text("Game Over", 40, (255, 0, 0))
                 pygame.display.flip()
@@ -58,13 +80,14 @@ class Level2(Level):
                 score_screen.save(self.menu_return, [int(self.score)])
                 return self.menu_return
 
+            # Vitória
             if self.time_left <= 0:
                 self.window.fill((0, 0, 0))
                 self.fade_in_text("Parabéns! Você venceu o jogo!", 36, (0, 255, 0))
                 pygame.display.flip()
                 pygame.time.delay(3000)
                 score_screen = Score(self.window)
-                score_screen.show()
+                score_screen.save(self.menu_return, [int(self.score)])
                 return
 
             # Render

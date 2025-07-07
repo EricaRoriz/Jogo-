@@ -50,15 +50,17 @@ class Menu:
                     elif event.key == pygame.K_RETURN:
                         if MENU_OPTION[menu_option] == "OPTIONS":
                             self.run_options_menu()
+                        elif MENU_OPTION[menu_option] == "EXIT":
+                            pygame.quit()
+                            quit()
                         else:
                             return MENU_OPTION[menu_option]
-
 
                     elif event.key == pygame.K_m:
                         muted = not muted
                         pygame.mixer_music.set_volume(0.0 if muted else volume)
                     elif event.key == pygame.K_RIGHT:
-                         if not muted and volume < 1.0:
+                        if not muted and volume < 1.0:
                             volume = min(1.0, volume + 0.1)
                             pygame.mixer_music.set_volume(volume)
                     elif event.key == pygame.K_LEFT:
